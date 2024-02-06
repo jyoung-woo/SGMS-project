@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sodasys.sgms.obsvData.mapper.ObsvDataMapper">
+
+    <select id="detailContents" resultType="obsvDataVo">
+        SELECT
+            A.obsv_cd AS obsvCd,
+            A.obsv_nm AS obsvNm,
+            MAX(CASE WHEN C.msrt_cd = 'OBM003' THEN C.msrt_value END) AS EL,
+            MAX(CASE WHEN C.msrt_cd = 'OBM004' THEN C.msrt_value END) AS GL,
+            MAX(CASE WHEN C.msrt_cd = 'OBM005' THEN C.msrt_value END) AS temp,
+            MAX(CASE WHEN C.msrt_cd = 'OBM006' THEN C.msrt_value END) AS EC,
+            MAX(CASE WHEN C.msrt_cd = 'OBM007' THEN C.msrt_value END) AS bar,
+            MAX(CASE WHEN C.msrt_cd = 'OBM008' THEN C.msrt_value END) AS battery
+        FROM obsv_info A
+        LEFT JOIN obsv_data C
+        ON A.obsv_cd = C.obsv_cd
+        WHERE A.obsv_cd = #{obsvCd}
+        GROUP BY A.obsv_cd, A.obsv_nm;
+
+    </select>
+
+    <select id="data" resultType="obsvDataVo">
+        SELECT obsv_cd,
+               msrt_dt,
+               MAX(CASE WHEN msrt_cd = 'OBM003' thEN Msrt_value END) AS EL,
+               MAX(CASE WHEN msrt_cd = 'OBM004' thEN Msrt_value END) AS GL,
+               MAX(CASE WHEN msrt_cd = 'OBM005' thEN Msrt_value END) AS temp,
+               MAX(CASE WHEN msrt_cd = 'OBM006' thEN Msrt_value END) AS EC,
+               MAX(CASE WHEN msrt_cd = 'OBM007' thEN Msrt_value END) AS bar,
+               MAX(CASE WHEN msrt_cd = 'OBM008' thEN Msrt_value END) AS battery,
+               MAX(CASE WHEN msrt_cd = 'PWS005' THEN msrt_value END) AS rainfall
+        FROM obsv_data
+        WHERE obsv_cd = #{obsvCd}
+        GROUP BY obsv_cd, msrt_dt
+        ORDER BY msrt_dt ASC
+    </select>
+
+    <select id="tableList" resultType="obsvDataVo">
+        <include refid="obsvDatacomm"></include>
+    </select>
+
+    <select id="tableListCnt" resultType="int">
+    SELECT COUNT(*)
+    FROM (<include refid="obsvDatacomm"></include>) Z
+    </select>
+
+    <select id="excel" resultType="obsvDataVo">
+        <include refid="obsvDatacomm"></include>
+    </select>
+
+    <select id="getObsvInfoBox" resultType="obsvDataVo">
+        SELECT obsv_cd AS obsvCd
+        FROM obsv_info
+        ORDER BY obsv_cd ASC
+    </select>
+
+    <select id="getSensorBox" resultType="obsvDataVo">
+        SELECT DISTINCT A.sensor_id
+        FROM sensor_info A
+        LEFT JOIN rtu_info B
+        ON A.rtu_id = B.rtu_id
+        LEFT JOIN obsv_data C
+        ON B.obsv_cd = C.obsv_cd
+        WHERE C.obsv_cd = #{obsvCd}
+    </select>
+    
+    <select id="weatherList" resultType="obsvWeatherVo">
+        <include refid="weatherComn"></include>
+    </select>
+    
+    <select id="weatherCnt" resultType="int">
+        SELECT COUNT(*)
+        FROM ( <include refid="weatherComn"></include> ) Z
+    </select>
+
+    <select id="weatherExcel" resultType="obsvWeatherVo">
+        <include refid="weatherComn"></include>
+    </select>
+
+    <sql id="obsvDatacomm">
+        SELECT DISTINCT D.obsv_nm,
+                        A.sensor_id AS sensorId,
+                        C.msrt_dt,
+                        MAX(CASE WHEN C.msrt_cd = 'OBM003' THEN C.msrt_value END) AS EL,
+                        MAX(CASE WHEN C.msrt_cd = 'OBM004' THEN C.msrt_value END) AS GL,
+                        MAX(CASE WHEN C.msrt_cd = 'OBM005' THEN C.msrt_value END) AS temp,
+                        MAX(CASE WHEN C.msrt_cd = 'OBM006' THEN C.msrt_value END) AS EC,
+                        MAX(CASE WHEN C.msrt_cd = 'OBM007' THEN C.msrt_value END) AS bar,
+                        MAX(CASE WHEN C.msrt_cd = 'OBM008' THEN C.msrt_value END) AS battery,
+                        MAX(CASE WHEN C.msrt_cd = 'OBM009' THEN C.msrt_value END) AS sBattery
+        FROM sensor_info A
+                 LEFT JOIN rtu_info B
+                           ON A.rtu_id = B.rtu_id
+                 LEFT JOIN obsv_data C
+                           ON B.obsv_cd = C.obsv_cd
+                 LEFT JOIN obsv_info D
+                           ON C.obsv_cd = D.obsv_cd
+        WHERE C.obsv_cd = #{obsvCd}
+        GROUP BY D.obsv_nm , A.sensor_id , C.msrt_dt
+        ORDER BY C.msrt_dt ASC
+    </sql>
+
+    <sql id="weatherComn">
+        SELECT
+            A.obsv_cd AS obsvCd,
+            D.sensor_id AS sensorId,
+            A.msrt_dt AS msrtDt,
+            B.obsv_nm AS obsvNm,
+            MAX(CASE WHEN A.msrt_cd = 'PWS001' THEN A.msrt_value END) AS windDir,
+            MAX(CASE WHEN A.msrt_cd = 'PWS002' THEN A.msrt_value END) AS windSpeed,
+            MAX(CASE WHEN A.msrt_cd = 'PWS003' THEN A.msrt_value END) AS airTemp,
+            MAX(CASE WHEN A.msrt_cd = 'PWS004' THEN A.msrt_value END) AS humidity,
+            MAX(CASE WHEN A.msrt_cd = 'PWS005' THEN A.msrt_value END) AS rainfall,
+            MAX(CASE WHEN A.msrt_cd = 'PWS006' THEN A.msrt_value END) AS atmPressure,
+            MAX(CASE WHEN A.msrt_cd = 'PWS007' THEN A.msrt_value END) AS solarRadiation,
+            MAX(CASE WHEN A.msrt_cd = 'PWS008' THEN A.msrt_value END) AS uv
+            FROM obsv_data AS A
+                 LEFT JOIN obsv_info AS B
+                           ON A.obsv_cd = B.obsv_cd
+                 LEFT JOIN rtu_info c
+                           ON a.obsv_cd = C.obsv_cd
+                 LEFT JOIN sensor_info D
+                           ON c.rtu_id = D.rtu_id
+        WHERE A.obsv_cd = #{obsvCd}
+        GROUP BY A.obsv_cd, A.msrt_dt, B.obsv_nm, D.sensor_id
+        ORDER BY a.msrt_dt ASC
+    </sql>
+</mapper>

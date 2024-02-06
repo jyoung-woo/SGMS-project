@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sodasys.sgms.menu.mapper.MenuMapper">
+    <select id="authCheck" resultType="menuVo">
+        SELECT  ma.menu_id,
+                m.url,
+                ma.aces_cd
+        FROM    MENU_AUTH ma
+                    JOIN    MENU m on m.menu_id = ma.menu_id
+        WHERE   m.url = #{url}
+          AND     ma.auth_cd = #{authCd}
+    </select>
+    <select id="getLeftMenu" resultType="menuVo">
+        WITH RECURSIVE MenuHierarchy AS (
+            SELECT  menu.menu_id,
+                    menu.menu_nm,
+                    menu.url,
+                    menu.up_id,
+                    menu.depth,
+                    menu."order",
+                    ARRAY[("order" || menu.menu_id)::bpchar] AS path,
+                    menu_auth.auth_cd,
+                    menu_auth.aces_cd
+            FROM    menu
+                    LEFT JOIN menu_auth ON menu.menu_id = menu_auth.menu_id
+            WHERE   up_id IS NULL
+            AND     menu_auth.aces_cd LIKE '1%'
+            AND     auth_cd = #{authCd}
+            UNION ALL
+            SELECT  m.menu_id,
+                    m.menu_nm,
+                    m.url,
+                    m.up_id,
+                    m.depth,
+                    m."order",
+                    mh.path || (m."order" || m.menu_id)::bpchar,
+                    ma.auth_cd,
+                    ma.aces_cd
+            FROM    menu m
+                    JOIN MenuHierarchy mh ON m.up_id = mh.menu_id
+                    LEFT JOIN menu_auth ma ON m.menu_id = ma.menu_id
+        )
+        SELECT  menu_id,
+                menu_nm,
+                url,
+                up_id,
+                depth,
+                "order"
+        FROM    MenuHierarchy
+        ORDER BY path, "order"
+    </select>
+</mapper>

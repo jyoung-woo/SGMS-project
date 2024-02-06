@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sodasys.sgms.realTime.mapper.RealTimeMapper">
+
+    <select id="getList" resultType="realTimeVo">
+       <include refid="list"></include>
+    </select>
+
+    <select id="getCnt" resultType="int">
+        SELECT COUNT(*)
+        FROM (
+                <include refid="list"></include>
+             )Z
+    </select>
+
+    <select id="detailContents" resultType="realTimeVo">
+        select A.obsv_cd AS obsvCd,
+               A.obsv_nm AS obsvNm,
+               A.dig_depth AS digDepth
+        FROM obsv_info A
+        LEFT JOIN obsv_data B
+        ON A.obsv_cd = B.obsv_cd
+        WHERE A.obsv_cd = #{obsvCd}
+    </select>
+
+    <select id="excel" resultType="realTimeVo">
+       <include refid="comm"></include>
+    </select>
+
+    <sql id="list">
+        SELECT A.obsv_cd AS obsvCd,
+        A.obsv_nm AS obsvNm,
+        A.dig_depth AS digDepth,
+        A.elev,
+        B.modem_tel AS modemTel,
+        MAX(msrt_dt) as msrtDt,
+        MAX(case when C.msrt_cd = 'OBM003' then C.msrt_value end) as EL,
+        MAX(case when C.msrt_cd = 'OBM004' then C.msrt_value end) as GL,
+        MAX(case when C.msrt_cd = 'OBM005' then C.msrt_value end) as temp,
+        MAX(case when C.msrt_cd = 'OBM006' then C.msrt_value end) as EC,
+        MAX(case when C.msrt_cd = 'OBM007' then C.msrt_value end) as bar,
+        MAX(case when C.msrt_cd = 'OBM008' then C.msrt_value end) as battery
+        FROM obsv_info AS A
+        LEFT JOIN rtu_info AS B
+        ON A.obsv_cd = B.obsv_cd
+        LEFT JOIN obsv_data AS C
+        ON C.obsv_cd = A.obsv_cd
+        WHERE 1=1
+        <choose>
+            <when test='searchType.equals("siteName") and searchKeyword != ""'>
+                AND A.obsv_nm ILIKE CONCAT('%', #{searchKeyword}, '%')
+            </when>
+            <when test='searchType.equals("addr") and searchKeyword != ""'>
+                AND A.obsv_cd ILIKE CONCAT('%', #{searchKeyword}, '%')
+            </when>
+        </choose>
+        GROUP BY A.obsv_cd, A.obsv_nm, A.elev, A.dig_depth,  B.modem_tel
+        ORDER BY A.obsv_nm
+    </sql>
+
+    <sql id="comm">
+        SELECT A.obsv_cd AS obsvCd,
+        A.obsv_nm AS obsvNm,
+        A.dig_depth AS digDepth,
+        A.elev,
+        B.modem_tel AS modemTel,
+        MAX(msrt_dt) as msrtDt,
+        MAX(case when C.msrt_cd = 'OBM003' then C.msrt_value end) as EL,
+        MAX(case when C.msrt_cd = 'OBM004' then C.msrt_value end) as GL,
+        MAX(case when C.msrt_cd = 'OBM005' then C.msrt_value end) as temp,
+        MAX(case when C.msrt_cd = 'OBM006' then C.msrt_value end) as EC,
+        MAX(case when C.msrt_cd = 'OBM007' then C.msrt_value end) as bar,
+        MAX(case when C.msrt_cd = 'OBM008' then C.msrt_value end) as battery
+        FROM obsv_info AS A
+        LEFT JOIN rtu_info AS B
+        ON A.obsv_cd = B.obsv_cd
+        LEFT JOIN obsv_data AS C
+        ON C.obsv_cd = A.obsv_cd
+        WHERE 1=1
+        <choose>
+            <when test='searchType.equals("siteName") and searchKeyword != ""'>
+                AND A.obsv_nm ILIKE CONCAT('%', #{searchKeyword}, '%')
+            </when>
+            <when test='searchType.equals("addr") and searchKeyword != ""'>
+                AND A.obsv_cd ILIKE CONCAT('%', #{searchKeyword}, '%')
+            </when>
+        </choose>
+        GROUP BY A.obsv_cd, A.obsv_nm, A.elev, A.dig_depth,  B.modem_tel
+        ORDER BY A.obsv_nm
+    </sql>
+</mapper>

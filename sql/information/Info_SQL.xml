@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.sodasys.sgms.information.mapper.InformationMapper">
+
+	<select id="siteListData" resultType="informationVo">
+	SELECT
+			ROW_NUMBER() OVER (ORDER BY O.obsv_nm) AS obsvSn,
+			O.obsv_cd AS obsvCd,
+			O.instl_ymd AS instlYmd,
+			O.obsv_nm AS obsvNm,
+			O.oper_yn AS operYn,
+			O.elev,
+			O.csi_dia AS csiDia,
+			O.dig_depth AS digDepth,
+			O.use_type AS useType,
+			O.drk_yn AS drkYn,
+			O.stdg_cd AS stdgCd,
+			CONCAT(S.ctpv_nm, ' ', S.sgg_nm, ' ', S.stty_end_nm, ' ', S.stli_nm, ' ', O.addr) AS
+			addr
+	FROM	obsv_info AS O
+	LEFT JOIN
+			stdg AS S ON O.stdg_cd = S.stdg_cd
+	<where>	 
+	<if test="authCd != 'AUT001'">
+    AND O.stdg_cd LIKE #{stdgCd} || '%'
+	</if>
+	<if test="searchKeyword != '' and searchKeyword != null">
+		<if test="searchType == 'addr'">
+			AND CONCAT(S.ctpv_nm, ' ', S.sgg_nm, ' ', S.stty_end_nm, ' ', S.stli_nm, ' ', O.addr) ILIKE CONCAT('%', #{searchKeyword}, '%')
+		</if>
+		<if test="searchType == 'name'">
+			AND obsv_nm ILIKE CONCAT('%', #{searchKeyword}, '%')
+		</if>
+		
+	</if>
+</where>
+</select>
+
+
+	<select id="siteSameCheck" resultType="int">
+		SELECT count(*)
+		FROM sys_cd
+		WHERE sys_cd = #{obsvCd}
+	</select>
+
+	<select id="siteObsvCdCheck" resultType="int">
+		SELECT count(*)
+		FROM obsv_info
+		<if test="obsvCd != '' and obsvCd != null">
+			where obsv_cd = #{obsvCd}
+		</if>
+	</select>
+
+	<insert id="siteInsert" parameterType="informationVo">
+    INSERT INTO obsv_info
+    (	
+        obsv_cd, 			
+        obsv_sn,	
+        obsv_nm,			
+        oper_yn,	
+        lat,		
+        lot,		
+        stdg_cd,		
+        addr,		
+        rdn_addr,			
+        use_yn,		
+        use_type,		
+        elev,	
+        dig_depth,	
+        csi_dia,	
+        drk_yn,		
+        instl_ymd,			
+        doc
+    )
+    SELECT DISTINCT 
+        #{obsvCd}, #{obsvSn}, #{obsvNm}, #{operYn}, #{lat}, #{lot},RPAD(#{stdgCd}, 10, '0') AS stdgCd,
+        #{addr} AS addr,
+        #{rdnAddr}, #{useYn}, #{useType}, #{elev}, #{digDepth}, #{csiDia}, #{drkYn}, #{instlYmd}, #{doc}
+    FROM
+        obsv_info AS O
+    LEFT JOIN 
+        stdg AS S ON O.stdg_cd = S.stdg_cd
+</insert>
+
+	
+	<select id="spotViewData" resultType="informationVo">
+	SELECT
+	O.stdg_cd AS stdgCd,
+	O.addr AS addr,
+	O.obsv_sn AS obsvSn,
+	O.obsv_cd AS obsvCd,
+	O.obsv_nm AS obsvNm,
+	O.oper_yn AS operYn,
+	O.lat AS lat,
+	O.lot AS lot,
+	CONCAT(S.ctpv_nm,' ',S.sgg_nm, ' ', S.stty_end_nm,' ' ,S.stli_nm) AS addrStdg,
+	O.rdn_addr AS rdnAddr,
+	O.use_yn AS useYn,
+	O.use_type AS useType,
+	O.elev AS elev,
+	O.dig_depth AS digDepth,
+	O.csi_dia AS csiDia,
+	O.drk_yn AS drkYn,
+	O.instl_ymd AS instlYmd,
+	O.doc AS doc
+	FROM
+	obsv_info AS O
+	left join
+	stdg AS S ON O.stdg_cd = S.stdg_cd
+	WHERE
+	O.obsv_Cd = #{obsvCd}
+
+</select>
+
+	<update id="siteUpdateData" parameterType="informationVo">
+	UPDATE "obsv_info"
+	
+	set stdg_cd = RPAD(#{stdgCd},10,'0'),
+		obsv_cd = #{obsvCd},
+		obsv_nm = #{obsvNm},
+		addr = #{addr},
+		obsv_sn = #{obsvSn},
+		oper_yn =  #{operYn},			
+		lat = #{lat},
+		lot = #{lot},			
+		rdn_addr = #{rdnAddr},			
+		use_yn = #{useYn},		
+		use_type = #{useType},		
+		elev = #{elev},
+		dig_depth =#{digDepth},	
+		csi_dia = #{csiDia},
+		drk_yn =#{drkYn},
+		instl_ymd = #{instlYmd},	
+		doc = #{doc}
+		WHERE obsv_cd = #{obsvCd}
+	</update>
+	
+
+	
+
+
+</mapper> 

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sodasys.sgms.user.mapper.UserMapper">
+    <select id="login" resultType="userVo">
+        SELECT user_id,
+               user_pwd,
+               user_email,
+               company_nm,
+               use_yn,
+               lock_yn,
+               init_pwd_yn,
+               fail_cnt,
+               stdg_cd,
+               auth_cd
+        FROM "user"
+        WHERE user_id = #{usrId}
+        AND   use_yn = 'Y'
+    </select>
+    <select id="getUserList" resultType="userVo">
+        SELECT ROW_NUMBER() OVER (ORDER BY crt_ymd) as row_num,
+        user_id,
+        user_email,
+        company_nm,
+        use_yn,
+        lock_yn
+        FROM "user"
+        <where>
+            <if test="searchKeyword != ''">
+                AND UPPER(${searchType}) like '%' || UPPER(#{searchKeyword}) || '%'
+            </if>
+            AND   use_yn = 'Y'
+        </where>
+        order by crt_ymd
+        limit ${limit}
+        offset ${offSet}
+    </select>
+    <select id="getUserCnt" resultType="int">
+        SELECT COUNT(*)
+        FROM "user"
+        <where>
+            <if test="searchKeyword != ''">
+                AND UPPER(${searchType}) like '%' || UPPER(#{searchKeyword}) || '%'
+            </if>
+            AND   use_yn = 'Y'
+        </where>
+    </select>
+    <select id="getUserDetail" resultType="userVo">
+        SELECT user_id,
+               company_nm,
+               user_email,
+               stdg_cd,
+               use_yn,
+               lock_yn,
+               init_pwd_yn,
+               fail_cnt,
+               user_end_ymd,
+               doc
+        FROM "user"
+        WHERE user_id = #{userId}
+        AND   use_yn = 'Y'
+    </select>
+    <update id="userUpdate">
+        UPDATE "user"
+        set company_nm = #{companyNm},
+            stdg_cd    = #{stdgCd},
+            user_email = #{userEmail},
+            lock_yn    = #{lockYn},
+            fail_cnt   = #{failCnt},
+            user_end_ymd = #{userEndYmd},
+            mdfcn_ymd  = TO_CHAR(NOW(), 'YYYYMMDD'),
+            doc        = #{doc}
+        WHERE user_id = #{userId}
+    </update>
+    <update id="userDelete">
+        UPDATE "user"
+        set use_yn = 'N'
+        WHERE user_id = #{userId}
+    </update>
+    <insert id="userAdd">
+        insert into "user"
+            (user_id,user_pwd,user_email,use_yn,lock_yn,init_pwd_yn,fail_cnt,company_nm,
+                auth_cd,crt_ymd,user_end_ymd,stdg_cd,doc)
+        values (#{userId},#{userPwd},#{userEmail},'Y','N','Y',0,#{companyNm},'AUT002',
+                TO_CHAR(NOW(), 'YYYYMMDD'),#{userEndYmd},#{stdgCd},#{doc})
+    </insert>
+    <update id="userPwdInit">
+        UPDATE "user"
+        set user_pwd = #{userPwd},
+            mdfcn_ymd = TO_CHAR(NOW(), 'YYYYMMDD'),
+            init_pwd_yn = 'Y'
+        WHERE user_id = #{userId}
+    </update>
+    <update id="userPwdUpdate">
+        UPDATE "user"
+        set user_pwd = #{userPwd},
+            mdfcn_ymd = TO_CHAR(NOW(), 'YYYYMMDD'),
+            init_pwd_yn = 'N'
+        WHERE user_id = #{userId}
+    </update>
+    <update id="loginFail">
+        UPDATE "user"
+        set fail_cnt = fail_cnt+1
+        WHERE user_id = #{userId}
+    </update>
+    <update id="loginSuccess">
+        UPDATE "user"
+        set fail_cnt = 0
+        WHERE user_id = #{userId}
+    </update>
+    <update id="userLockUpdate">
+        UPDATE  "user"
+        set     lock_yn = 'Y'
+        WHERE   user_id = #{userId}
+    </update>
+    <select id="getUserFailCnt" resultType="int">
+        select  fail_cnt
+        from    "user"
+        WHERE   user_id = #{userId}
+    </select>
+</mapper>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sodasys.sgms.comn.stdg.mapper.StdgMapper">
+    <select id="getCtpvList" resultType="stdgVo">
+        SELECT
+            CASE WHEN substr(stdg_cd, 1, 2) = '36' THEN '36110'
+                 ELSE substr(stdg_cd, 1, 2)
+                END as stdg_cd,
+            substr(stdg_cd,1,2) as stdg_cd,
+            ctpv_nm
+        FROM    stdg
+        WHERE   sgg_nm is null
+          AND     stty_end_nm is null
+          AND     stli_nm is null
+    </select>
+    <select id="getSggList" resultType="stdgVo">
+        SELECT  substr(stdg_cd,3,3) as stdg_cd,
+                sgg_nm
+        FROM    stdg
+        WHERE   sgg_nm is not null
+        AND     stty_end_nm is null
+        AND     substr(stdg_cd,1,2) = #{stdgCd}
+    </select>
+    <select id="getSttyList" resultType="stdgVo">
+        SELECT  substr(stdg_cd,6,3) as stdg_cd,
+                stty_end_nm
+        FROM    stdg
+        WHERE     stty_end_nm is not  null
+        AND     stli_nm is null
+        AND     substr(stdg_cd,1,5) = #{stdgCd}
+    </select>
+    <select id="getStliList" resultType="stdgVo">
+        SELECT  substr(stdg_cd,9,2) as stdg_cd,
+                stli_nm
+        FROM    stdg
+        WHERE   stty_end_nm is not  null
+        AND     stli_nm is not null
+        AND     substr(stdg_cd,1,8) = #{stdgCd}
+    </select>
+</mapper>
